@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社會科進階測驗：傳統住屋與器物生活</title>
+  <style>
+    :root {
+      --bg-dark: #121d33;
+      --card-bg: #ffffff;
+      --primary: #2b5278;
+      --accent: #d97736;
+      --text-dark: #1f2937;
+      --text-light: #f3f4f6;
+      --red: #e53e3e;
+      --blue: #3182ce;
+      --yellow: #d69e2e;
+      --green: #38a169;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    }
+
+    body {
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(43, 82, 120, 0.4) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(217, 119, 54, 0.25) 0%, transparent 40%);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 850px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 頂部進度條與狀態 */
+    .header {
+      background: #1e293b;
+      color: var(--text-light);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 4px solid var(--accent);
+    }
+
+    .topic-tag {
+      background: rgba(217, 119, 54, 0.2);
+      color: #f97316;
+      border: 1px solid #f97316;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: #334155;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+
+    .screen {
+      padding: 32px 24px;
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* 開始畫面 */
+    .start-screen {
+      text-align: center;
+      padding: 48px 24px;
+    }
+
+    .start-screen h1 {
+      font-size: 28px;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .start-screen p {
+      font-size: 16px;
+      color: #64748b;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(217, 119, 54, 0.3);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(217, 119, 54, 0.4);
+    }
+
+    /* 題目區 */
+    .question-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--text-dark);
+      margin-bottom: 24px;
+      line-height: 1.5;
+      min-height: 60px;
+    }
+
+    /* 選項網格 */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .option-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 20px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: transform 0.1s, opacity 0.2s;
+      line-height: 1.4;
+      min-height: 80px;
+    }
+
+    .option-btn:hover {
+      transform: scale(1.01);
+      filter: brightness(1.05);
+    }
+
+    .option-btn:disabled {
+      cursor: not-allowed;
+    }
+
+    .opt-a { background-color: var(--red); }
+    .opt-b { background-color: var(--blue); }
+    .opt-c { background-color: var(--yellow); }
+    .opt-d { background-color: var(--green); }
+
+    .opt-prefix {
+      font-size: 20px;
+      font-weight: bold;
+      margin-right: 12px;
+      opacity: 0.9;
+    }
+
+    /* 回饋與解析區 */
+    .explanation-card {
+      background: #f8fafc;
+      border-left: 5px solid var(--primary);
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .explanation-card.correct {
+      border-color: var(--green);
+      background: #f0fdf4;
+    }
+
+    .explanation-card.wrong {
+      border-color: var(--red);
+      background: #fef2f2;
+    }
+
+    .result-status {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .result-status.correct { color: var(--green); }
+    .result-status.wrong { color: var(--red); }
+
+    .explanation-text {
+      color: #475569;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .next-btn-container {
+      text-align: right;
+      display: none;
+    }
+
+    /* 結算畫面 */
+    .end-screen {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .score-box {
+      font-size: 48px;
+      font-weight: bold;
+      color: var(--primary);
+      margin: 16px 0;
+    }
+
+    .summary-text {
+      font-size: 18px;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 640px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .question-title {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-container">
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <div class="header">
+    <span class="topic-tag" id="topic-tag">準備挑戰</span>
+    <span id="score-display">得分：0</span>
+  </div>
+
+  <!-- 開始畫面 -->
+  <div class="screen active" id="start-screen">
+    <div class="start-screen">
+      <h1>社會科進階測驗：傳統住屋與器物生活</h1>
+      <p>精選 10 題觀念挑戰題<br>包含「2-1 傳統住屋」與「2-2 器物與生活」的深度解析。</p>
+      <button class="btn" onclick="startGame()">開始測驗</button>
+    </div>
+  </div>
+
+  <!-- 測驗畫面 -->
+  <div class="screen" id="quiz-screen">
+    <div class="question-title" id="question-title">題目載入中...</div>
+
+    <div class="options-grid">
+      <button class="option-btn opt-a" onclick="selectAnswer(0)">
+        <span class="opt-prefix">A</span>
+        <span id="opt-0">選項 A</span>
+      </button>
+      <button class="option-btn opt-b" onclick="selectAnswer(1)">
+        <span class="opt-prefix">B</span>
+        <span id="opt-1">選項 B</span>
+      </button>
+      <button class="option-btn opt-c" onclick="selectAnswer(2)">
+        <span class="opt-prefix">C</span>
+        <span id="opt-2">選項 C</span>
+      </button>
+      <button class="option-btn opt-d" onclick="selectAnswer(3)">
+        <span class="opt-prefix">D</span>
+        <span id="opt-3">選項 D</span>
+      </button>
+    </div>
+
+    <div class="explanation-card" id="explanation-card">
+      <div class="result-status" id="result-status">答對了！</div>
+      <div class="explanation-text" id="explanation-text">解析說明...</div>
+    </div>
+
+    <div class="next-btn-container" id="next-btn-container">
+      <button class="btn" onclick="nextQuestion()" id="next-btn">下一題</button>
+    </div>
+  </div>
+
+  <!-- 結算畫面 -->
+  <div class="screen" id="end-screen">
+    <div class="end-screen">
+      <h2>測驗完成！</h2>
+      <div class="score-box" id="final-score">0 / 10</div>
+      <p class="summary-text" id="final-eval">表現優異！對傳統住屋與器物智慧有深入的了解。</p>
+      <button class="btn" onclick="startGame()">再試一次</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const quizData = [
+    {
+      topic: "2-1 傳統住屋",
+      title: "1.【建材細節題】早期漢人蓋房子的建材，哪一種「不是」普通農村人家在生活周遭隨手就能就地取材取得，而是需要人工燒製或從中國運來？",
+      options: [
+        "泥土與稻稈（土埆厝）",
+        "刺竹與桂竹（竹管仔厝）",
+        "紅磚與瓦片",
+        "石塊與石頭"
+      ],
+      answer: 2,
+      explain: "正解為 (C)。泥土、竹子與石頭多可在周遭免費就地取材；而紅磚與瓦片需要高溫人工燒製，或由對岸運來，造價較昂貴。"
+    },
+    {
+      topic: "2-1 傳統住屋",
+      title: "2.【左右尊卑判讀題】三合院傳統觀念強調「以左為尊、左大右小」。當我們「面對三合院照片或圖片」時，最尊貴的大房（左護龍）位在圖片的哪一邊？",
+      options: [
+        "左邊",
+        "右邊",
+        "正中央",
+        "正後方"
+      ],
+      answer: 1,
+      explain: "正解為 (B)。空間尊卑方向是以人站在正廳「面向外」看的左右為準，因此觀眾面對圖片時，傳統的「左護龍」會在圖片的右側。"
+    },
+    {
+      topic: "2-1 傳統住屋",
+      title: "3.【住屋功能比較題】關於原住民族傳統住屋的特色，下列哪一項敘述「完全正確」？",
+      options: [
+        "達悟族地下屋主要是為了「防老鼠」",
+        "排灣族石板屋因為石板厚，具有「冬暖夏涼、會呼吸」的特性",
+        "泰雅族高架穀倉主要是為了「躲避颱風」",
+        "所有原住民族傳統住屋都是用鋼筋水泥建造"
+      ],
+      answer: 1,
+      explain: "正解為 (B)。石板屋結構密實且散熱吸熱均勻，具冬暖夏涼特性；地下屋主因防颱風，高架穀倉柱子加裝防鼠板主因防鼠。"
+    },
+    {
+      topic: "2-1 傳統住屋",
+      title: "4.【防災智慧題】三合院門前常有半圓形的「半月池」，除了養魚洗衣服和風水外，在早期農村還有什麼極重要的「緊急公共安全」功能？",
+      options: [
+        "儲存農藥",
+        "發生火災時取水滅火",
+        "讓牛隻進去洗澡",
+        "排放廚房廢水"
+      ],
+      answer: 1,
+      explain: "正解為 (B)。半月池具備蓄水功能，早期木竹結構居所若遇火災，半月池即為最主要的救火水源。"
+    },
+    {
+      topic: "2-1 傳統住屋",
+      title: "5.【老屋保存題】政府將澎湖二崁村或屏東老七佳部落列為「聚落保存區」，最主要的目的「不包括」下列哪一項？",
+      options: [
+        "保護珍貴的傳統建築",
+        "保存先民適應環境的智慧與歷史文化",
+        "強制所有現代居民搬回舊房子生活",
+        "推動結合在地特色的文創觀光"
+      ],
+      answer: 2,
+      explain: "正解為 (C)。聚落保存旨在維護文化資產與帶動觀光，不會強制居民搬遷或限制現代生活型態。"
+    },
+    {
+      topic: "2-2 器物與生活",
+      title: "6.【永續生態題】原住民族用竹藤編織「魚筌」捕魚時，旁邊故意留有縫隙，這展現了什麼傳統智慧？",
+      options: [
+        "代表編織技術不成熟",
+        "讓小魚能從縫隙游走，永續維持生態平衡",
+        "為了讓溪水流走以減輕魚筌重量",
+        "方便讓水蛇游進去捕食"
+      ],
+      answer: 1,
+      explain: "正解為 (B)。魚筌留有縫隙可讓幼魚順利游出，避免過度捕撈，展現環境永續的自然智慧。"
+    },
+    {
+      topic: "2-2 器物與生活",
+      title: "7.【傳統器物優點題】阿嬤時代的「棕櫚葉蓑衣」雖然比現代「塑膠雨衣」重，但蓑衣有什麼現代塑膠雨衣「無法比擬」的優點？",
+      options: [
+        "穿起來比較時尚漂亮",
+        "廢棄後能回歸大自然分解，不會造成塑膠垃圾",
+        "可以完全收納進口袋裡",
+        "價格比塑膠雨衣便宜很多"
+      ],
+      answer: 1,
+      explain: "正解為 (B)。天然植物纖維製造的蓑衣可全自然降解，不若現代塑膠製品會造成長期環境負擔。"
+    },
+    {
+      topic: "2-2 器物與生活",
+      title: "8.【器物演變題】早期漢人廚房的「竹菜櫥」具有防蟲與通風功能，現代普遍被「冰箱」取代。這種改變主要反映了什麼現象？",
+      options: [
+        "現代人不再吃剩菜",
+        "科技進步帶來保鮮度更高、更便利的生活",
+        "竹子已經在臺灣完全絕種",
+        "現代房屋空間太小放不下菜櫥"
+      ],
+      answer: 1,
+      explain: "正解為 (B)。器物的演變展現了科技進步提升保存食物品質與生活的方便性。"
+    },
+    {
+      topic: "2-2 器物與生活",
+      title: "9.【環境議題題】根據臺灣海洋廢棄物統計，數量最多的前幾名大多是「塑膠製品」（如吸管、瓶蓋、免洗餐具）。這些海洋廢棄物主要與我們生活中的哪種行為最相關？",
+      options: [
+        "建築房屋",
+        "外帶飲食與飲用飲料的使用習慣",
+        "農田灌溉",
+        "工廠製造鋼鐵"
+      ],
+      answer: 1,
+      explain: "正解為 (B)。免洗餐具與一次性飲料包裝等外帶習慣，是海洋塑膠廢棄物的主要來源。"
+    },
+    {
+      topic: "2-2 器物與生活",
+      title: "10.【減塑實踐題】響應「減塑運動」時，下列哪一種做法「最無法」有效減少塑膠垃圾的產生？",
+      options: [
+        "出門購買飲料時自備不鏽鋼或環保吸管",
+        "攜帶可重複使用的購物袋與便當盒",
+        "每次買飲料都換用不同顏色的拋棄式塑膠吸管",
+        "選擇包裝較少或材質對環境友善的商品"
+      ],
+      answer: 2,
+      explain: "正解為 (C)。使用拋棄式塑膠吸管會直接增加塑膠垃圾產生，無法達到減塑效果。"
+    }
+  ];
+
+  let currentQuestion = 0;
+  let score = 0;
+  let answered = false;
+
+  function startGame() {
+    currentQuestion = 0;
+    score = 0;
+    document.getElementById('score-display').innerText = `得分：${score}`;
+    showScreen('quiz-screen');
+    loadQuestion();
+  }
+
+  function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  }
+
+  function loadQuestion() {
+    answered = false;
+    const q = quizData[currentQuestion];
+
+    // 更新進度與標題
+    document.getElementById('topic-tag').innerText = q.topic;
+    document.getElementById('question-title').innerText = q.title;
+    document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / quizData.length) * 100}%`;
+
+    // 載入選項
+    for (let i = 0; i < 4; i++) {
+      document.getElementById(`opt-${i}`).innerText = q.options[i];
+      const btn = document.querySelectorAll('.option-btn')[i];
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    }
+
+    // 重設回饋區
+    document.getElementById('explanation-card').style.display = 'none';
+    document.getElementById('next-btn-container').style.display = 'none';
+  }
+
+  function selectAnswer(index) {
+    if (answered) return;
+    answered = true;
+
+    const q = quizData[currentQuestion];
+    const isCorrect = (index === q.answer);
+    const buttons = document.querySelectorAll('.option-btn');
+
+    // 停用所有按鈕並調整透明度
+    buttons.forEach((btn, i) => {
+      btn.disabled = true;
+      if (i !== q.answer && i !== index) {
+        btn.style.opacity = "0.3";
+      }
+    });
+
+    if (isCorrect) {
+      score += 10;
+      document.getElementById('score-display').innerText = `得分：${score}`;
+    }
+
+    // 顯示說明卡
+    const expCard = document.getElementById('explanation-card');
+    const statusText = document.getElementById('result-status');
+    const expText = document.getElementById('explanation-text');
+
+    expCard.style.display = 'block';
+    expCard.className = `explanation-card ${isCorrect ? 'correct' : 'wrong'}`;
+    statusText.className = `result-status ${isCorrect ? 'correct' : 'wrong'}`;
+    statusText.innerText = isCorrect ? '答對了！' : '答錯了！';
+    expText.innerText = q.explain;
+
+    // 按鈕文字變更
+    const nextBtn = document.getElementById('next-btn');
+    if (currentQuestion === quizData.length - 1) {
+      nextBtn.innerText = "查看總結";
+    } else {
+      nextBtn.innerText = "下一題";
+    }
+
+    document.getElementById('next-btn-container').style.display = 'block';
+  }
+
+  function nextQuestion() {
+    currentQuestion++;
+    if (currentQuestion < quizData.length) {
+      loadQuestion();
+    } else {
+      showEndScreen();
+    }
+  }
+
+  function showEndScreen() {
+    showScreen('end-screen');
+    document.getElementById('progress-bar').style.width = '100%';
+    document.getElementById('topic-tag').innerText = '測驗完成';
+    document.getElementById('final-score').innerText = `${score} / 100`;
+
+    const evalText = document.getElementById('final-eval');
+    if (score === 100) {
+      evalText.innerText = "太厲害了！滿分通過！你已經完全掌握傳統住屋與器物生活的智慧。";
+    } else if (score >= 70) {
+      evalText.innerText = "表現相當優異！對社會課程的觀念細節掌握得很紮實。";
+    } else {
+      evalText.innerText = "再接再厲！建議可以複習一下細節觀念後再次挑戰。";
+    }
+  }
+</script>
+
+</body>
+</html>
